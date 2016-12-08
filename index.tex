@@ -1,0 +1,321 @@
+\documentclass[12pt]{article}
+\usepackage{sbc-template}
+\usepackage{graphicx,url}
+\usepackage[brazil]{babel}   
+\usepackage[utf8]{inputenc}  
+\usepackage{indentfirst}
+\usepackage{graphics}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage[cache=false]{minted}
+\usepackage{pgfplots}
+\usepackage{smartdiagram}
+\usesmartdiagramlibrary{additions}
+\usepackage{tikz}
+\usetikzlibrary{shapes,decorations,arrows}
+\pgfplotsset{compat=1.12}
+\sloppy
+\title{Um Modelo de Comunicação para Automação na Execução de Consultas de Dados sobre APIs Web}
+\author{Mateus Maso\inst{1}, Frank Siqueira\inst{2}}
+\address{Departamento de Informática e Estatística (INE)\\Universidade Federal de Santa Catarina (UFSC) -- Florianópolis, SC -- Brazil
+\email{mateus.maso@grad.ufsc.br, frank.siqueira@ufsc.br}}
+
+\begin{document} 
+  \maketitle
+  \begin{abstract}
+    In order to maintain client-server communication efficiency without the need of versioning Web APIs, services have come across problems while performing changes on their interface access specification due to the coupling caused by clients on the implementation of its fetching code. Seeking to develop a solution for the problem, this project conducts a study on the usage of GraphQL language and API description formats to propose a client-server communication model through automation in the execution of data queries. As a result, a tool foresaw by the proposed model is developed to validate its applicability and guide client-side developers to the implementation of data fetching code independent of API specification.
+  \end{abstract}
+
+  \begin{resumo} 
+    A fim de manter a eficiência da comunicação cliente-servidor sem a necessidade do versionamento de APIs Web, serviços têm encontrado dificuldades em realizar mudanças na especificação de sua interface de acesso devido ao acoplamento causado por clientes na implementação em seu código de busca. No intuito de desenvolver uma solução para o problema encontrado, este trabalho realiza um estudo sobre o uso da linguagem GraphQL e formatos de descrição de API para propor um modelo de comunicação cliente-servidor através da automação na execução de consultas de dados. Como resultado, é desenvolvida uma ferramenta prevista pelo modelo proposto para validar sua aplicabilidade e direcionar desenvolvedores de clientes à implementação de um código de busca independente de especificação de API.
+  \end{resumo}
+
+  \section{Introdução}
+
+  Em 2005, ocorreu uma grande transição no modelo de comunicação entre aplicações distribuídas, onde estas passaram a utilizar amplamente o protocolo HTTP e o modelo cliente-servidor para a troca de informações na World Wide Web. Hoje, empresas como Facebook e Netflix mostram que construir APIs Web é, não apenas essencial para entrar rápido no mercado de plataformas emergentes, como também um novo meio de agregar valor em seu próprio modelo de negócio e oferecer uma melhor experiência a seus usuários. \cite{Duvander2013-2, Art2016}
+  
+  Contudo, após anos de sua popularização, serviços têm mostrado dificuldades em realizar mudanças em suas APIs Web sem comprometer a comunicação de clientes. Isso porque clientes continuam implementando seu código de busca através de chamadas diretamente na API, ocasionando um acoplamento da especificação muitas vezes indesejado pelos serviços.
+  
+  Com o objetivo de resolver o problema de acoplamento, este trabalho propõe um novo modelo de comunicação cliente-servidor através da automação na execução de consultas de dados sobre APIs Web. O modelo visa direcionar desenvolvedores de clientes à implementação de códigos de busca independente de especificação de API, resultando no desenvolvimento de clientes tolerantes às mudanças na especificação. Ainda, prevê o desenvolvimento de uma ferramenta que funciona como intermediadora na comunicação e automação de consultas, permitindo otimização de requisições e composição de serviços para consulta de dados.
+  
+  \section{Desenvolvimento}
+
+  \subsection{Planejamento de Projeto}
+
+  Para que clientes possam trabalhar com dados remotos, é preciso que haja um meio de buscá-los antes de executar qualquer lógica que dependa deles. Para isso, a solução comumente adotada é a implementação de um código de busca para acesso remoto de dados em APIs de serviços\footnote{
+    Infraestrutura distribuída (servidores, banco de dados, etc) que respondem a pedidos de operações oriundas de clientes em forma de requisições de API.
+  }. Contudo, ao passar do tempo, fez-se necessário estabelecer um contrato de acesso entre o cliente e a interface do serviço. Isso porque a atual implementação do código de busca por clientes não prevê mudanças na especificação da API. Este contrato é, portanto, representado no modelo de comunicação da figura 16 através de chamadas entre o código de busca do cliente e a API do serviço.
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+      \node (client) at (-3,0) {\includegraphics[width=1.0cm]{figuras/client}};
+      \node[right of=client] (clientFetchCode) at (-2.2,0.7) {\includegraphics[width=1.1cm]{figuras/code}};
+      \node[below of=clientFetchCode, node distance=1.6cm] (clientLogicCode) {\includegraphics[width=1.1cm]{figuras/code}};
+      \node[rectangle,minimum width=0.8cm, minimum height=3cm,draw,right of=clientFetchCode, node distance=3.0cm] (api) {$API$};
+      \node[right of=api, node distance=1.8cm] (server) {\includegraphics[width=1.0cm]{figuras/server}};
+      \node[below of=server, node distance=1.8cm] (datastore) {\includegraphics[width=1.0cm]{figuras/database}};
+      \node[above of=server, node distance=1.8cm] (data) {\includegraphics[width=1.1cm]{figuras/code}};
+      \node[cloud, cloud puffs=30, minimum width=11cm, minimum height=10cm, draw,style={scale=0.6}] (service) at (server) {};
+      \node[below of=clientFetchCode,node distance=0.0cm] {\textless$fetch$\textgreater};
+      \node[below of=clientLogicCode,node distance=0.0cm] {\textless$logic$\textgreater};
+      \node[below of=data,node distance=0.0cm] {\{$data$\}};
+      \node[below of=service,node distance=3.6cm] {$Service$};
+      \node[below of=client,node distance=1.8cm] {\ldots};
+      \node[right of=server,node distance=1.8cm] {\ldots};
+      \draw[decorate,decoration={brace,raise=0.2cm,mirror}] ([yshift=6pt]clientFetchCode.north west) -- ([yshift=-12pt]clientLogicCode.south west);
+      \draw [->] ([yshift=0.25cm]clientFetchCode.east) -- ([yshift=0.25cm]api.west);
+      \draw [->] (api) -- (clientFetchCode);
+    \end{tikzpicture}
+    \caption{Modelo de comunicação entre cliente e serviço}
+  \end{figure}
+  
+  O modelo de comunicação representado pode não revelar problemas para serviços com pouca demanda de acesso e diversidade de consultas. Contudo, ao longo do tempo e com o aumento na quantidade de contratos, alterações na especificação como, por exemplo, as de fluxo de dados\footnote{
+  Fluxo de acesso por clientes para consulta de dados sobre APIs de serviços.
+} podem se tornar um desafio.
+
+Mudanças no fluxo de dados pela API são inevitáveis em aplicações distribuídas. Elas ocorrem para abraçar a constante transformação por clientes na execução de consultas de dados. Com isso, busca-se manter uma comunicação eficiente através da redução no número de chamadas executadas na API e do tamanho de dados transmitidos pela rede. Essas mudanças podem ser desde uma simples alteração no nome de um método ou número argumentos, até as mais complexas, como dados de retorno e estilo de arquitetura. A figura 17 ilustra o fluxo de dados entre um cliente e um serviço.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\small]
+    \draw (-2,0) -- (-2,-5) (2,0) -- (2,-5);
+    \node at (-2,0.3) {Client};
+    \node at (2,0.3) {API (Service)};
+    \node[loosely dotted] (virtualData) at (-4,-1){\includegraphics[width=1.1cm]{figuras/code}};
+    \node[below of=virtualData,node distance=0.0cm] {\{$data$\}};
+    \node (data) at (-4,-4.5) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[below of=data,node distance=0.0cm] {\{$data$\}};
+    \node[cloud, cloud puffs=16,draw,minimum height=1.2cm] (cloudData) at (4,-2.5) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[below of=cloudData,node distance=0.0cm] {\{$data$\}};
+    \draw[->] (-2,-1) -- node[midway,above] {$request$} (2,-1.5);
+    \draw[<-] (-2,-2.5) -- node[midway,above] {$response$} (2,-2);
+    \draw[->] (-2,-3) -- node[midway,above] {$request$} (2,-3.5);
+    \draw[<-] (-2,-4.5) -- node[midway,above] {$response$} (2,-4);
+  \end{tikzpicture}
+  \caption{Fluxo de dados entre cliente e API}
+\end{figure}
+
+O impacto causado em clientes por mudanças no fluxo de dados de uma API felizmente é previsível, pois afeta diretamente, em sua maioria, o código de busca. Por outro lado, mudanças como a alteração de campos nas estruturas de dados, como renomear um campo "nome" para "nome\_completo", são de um grau de complexidade maior, pois pode não ter impacto no código de busca e sim na lógica da aplicação, onde é bem mais difícil de depurar erros.
+
+  \subsection{Proposta de Modelo}
+
+  Um novo modelo é proposto com o intuito de melhorar a comunicação cliente-servidor apresentada. Observado na figura 18, este prevê a criação de uma ferramenta no cliente para a intermediação da comunicação entre o código de busca e a API de serviços. Além disso, há a necessidade de reimplementação do código de busca para uma nova linguagem de consulta que seja interpretada pelo intermediador. Da mesma forma, soma-se a criação de um arquivo no serviço para descrição de metadados da API e outro no cliente para configuração, ambos essenciais para o funcionamento da ferramenta.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\small]
+    \node (client) at (-3,0) {\includegraphics[width=1.0cm]{figuras/client}};
+    \node[right of=client] (clientFetchCode) at (-2.2,0) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[below of=clientFetchCode, node distance=1.6cm] (clientLogicCode) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[above of=clientFetchCode, node distance=1.6cm] (clientConfigCode) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[rectangle,draw,right of=clientFetchCode,minimum height=1cm,minimum width=1.5cm,node distance=2.0cm] (tool) {$Tool$};
+    \node[rectangle,minimum width=0.8cm, minimum height=3cm,draw,node distance=1.8cm,right of=tool,node distance=2.7cm] (api) {$API$};
+    \node[right of=api, node distance=1.8cm] (data) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[below of=data,node distance=1.8cm] (server) {\includegraphics[width=1.0cm]{figuras/server}};
+    \node[above of=data, node distance=1.8cm] (metadata) {\includegraphics[width=1.1cm]{figuras/code}};
+    \node[cloud, cloud puffs=30, minimum width=11cm, minimum height=10cm, draw,style={scale=0.6}] (service) at (data) {};
+    \node[below of=clientFetchCode,node distance=0.0cm] {\textless$fetch$\textgreater};
+    \node[below of=clientLogicCode,node distance=0.0cm] {\textless$logic$\textgreater};
+    \node[below of=clientConfigCode,node distance=0.0cm] {\textless$config$\textgreater};
+    \node[below of=metadata,node distance=0.0cm] {\{$metadata$\}};
+    \node[below of=data,node distance=0.0cm] {\{$data$\}};
+    \node[below of=service,node distance=3.6cm] {$Service$};
+    \node[below of=client,node distance=1.8cm] {\vdots};
+    \node[right of=data,node distance=1.8cm] {\ldots};
+    \draw[decorate,decoration={brace,raise=0.2cm,mirror}] ([yshift=6pt]clientConfigCode.north west) -- ([yshift=-12pt]clientLogicCode.south west);
+    \draw [->] ([yshift=0.25cm]clientFetchCode.east) -- ([yshift=0.25cm]tool.west);
+    \draw [->] (tool) -- (clientFetchCode);
+    \draw [->] ([yshift=0.25cm]tool.east) -- ([yshift=0.25cm]api.west);
+    \draw [->] (api) -- (tool);
+    \draw [->,dashed] (clientConfigCode) -| ([xshift=-0.25cm]tool.north);
+    \draw [->,dashed] (metadata) -| ([xshift=0.25cm]tool.north);
+  \end{tikzpicture}
+  \caption{Modelo proposto para evitar contrato de comunicação}
+\end{figure}
+
+A proposta de eliminação de contrato visa também automatizar o acesso de clientes em APIs. Através da implementação de algoritmos na ferramenta, escolhe-se o caminho de acesso de melhor custo-benefício em relação aos serviços disponíveis para o cliente. O modelo proporciona, além disso, um ambiente escalável para consulta de dados através da composição de serviços, visto na figura 19.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\small]
+    \node (client1) at (-2,0) {\includegraphics[width=1.0cm]{figuras/client}};
+    \node (client2) at (2,0) {\includegraphics[width=1.0cm]{figuras/client}};
+    \node[rectangle,draw,minimum height=1cm,minimum width=1.5cm,below of=client2,node distance=2.3cm] (tool) {$Tool$};
+    \node[cloud, cloud puffs=16, draw] (service1) at (-3,-6) {$Service_1$};
+    \node (serviceDots) at (0,-6) {\ldots};
+    \node[cloud, cloud puffs=16,minimum height=1cm, draw] (serviceN) at (3,-6) {$Service_N$};
+    \draw [->] (client1) -- (service1) node [midway,above,font=\footnotesize] {$request$};
+    \draw [->] (client1) -- (serviceN) node [midway,above,font=\footnotesize] {$request$};
+    \draw [->] (client2) -- (tool) node [midway,above,font=\footnotesize] {$query$};
+    \draw [->] (tool) -- (service1) node [midway,above,font=\footnotesize] {$request$};
+    \draw [->] (tool) -- (serviceN) node [midway,above,font=\footnotesize] {$request$};
+  \end{tikzpicture}
+  \caption{Composição de serviços através da ferramenta}
+\end{figure}
+
+  \subsection{Especificação da Ferramenta}
+
+  Visando a aceitação da ferramenta prevista pelo modelo em ambientes de desenvolvimento de clientes, foi preciso pensar em uma especificação que apresentasse uma interface de baixa curva de aprendizagem, um fluxo de execução replicável e agnóstico à plataforma, além do baixo impacto na base de código de clientes. Por conseguinte, a ferramenta proposta foi desenvolvida pensando na reutilização de tecnologias promissoras ou bem consolidadas no mercado de desenvolvimento.
+
+Com a sucessão de estudos, a escolha foi em utilizar a tecnologia GraphQL como principal biblioteca para ajudar com intermediação da comunicação do modelo proposto. Ao invés da tecnologia Falcor (apontada durante o estudo), GraphQL foi o único que apresentou uma solução robusta que permitisse o acesso de APIs Web por clientes através de consultas em seu código de busca. Da mesma forma, buscou-se trabalhar com formatos abertos de descrição de metadados de APIs, como por exemplo o JSON Hyper-Schema. Através de adaptadores, a ferramenta permite acelerar a integração de serviços que já oferecem metadados em formatos suportados.
+
+  \subsection{Implementação da Ferramenta}
+
+  A fim de aplicar a especificação da ferramenta abordada no planejamento de projeto, foi proposta a implementação de onze funções, divididas em três categorias, para o uso de clientes na plataforma Web. Cada uma dessas funções levantadas resolve um problema com o intuito de chegar ao objetivo de representar os dois fluxos de execução. Dentro do conjunto de funções, quatro delas são responsáveis por criar o intermediador; três funções analisam as consultas através do formato AST; e as outras quatro transformam as consultas em requisições para API de serviços. Somente quatro são públicas e expostas para o cliente, sendo uma delas a principal para criação do esquema de consulta, e as outras três para serem sobrescritas por adaptadores.
+
+  \section{Validação}\label{sec:figs}
+	
+  Com o objetivo de validar o modelo proposto, é realizada uma pesquisa comparativa com foco no impacto da relação do uso da ferramenta implementada e mudanças no fluxo de dados sobre APIs Web. Para isso, é desenvolvido um ambiente de validação onde dois clientes, um com a ferramenta e o outro não, realizam três consultas de dados sobre uma API REST. Por fim, é aplicada uma série de quatro mudanças no fluxo de dados da API e coletados os dados para análise do impacto causado no código de busca desses clientes.
+  
+  \subsection{Resultados}
+  
+  Inicialmente, observa-se na figura 27 que o cliente 1 (sem o uso da ferramenta) não apresenta um bom índice de acerto das respostas. Dentre as quatro mudanças, obteve apenas 58\% de acerto, sendo a C3 a única mudança em que conseguiu responder corretamente todas as perguntas, pois não houve mudança nas URIs que estava utilizando. Um resultado esperado, significando que houve quebra de contrato e impacto negativo no código de busca.
+
+  Em contrapartida, o cliente 2 (com o uso da ferramenta) apresenta um resultado no índice de acerto da figura 28 36.61\% superior ao cliente 1. Com um total de 91,5\% de acerto, apenas não completou com 100\% de acerto pois a mudança C4 não permitiu que fosse possível acessar todos os dados necessários para a responder da pergunta Q2. Isso representa que a ferramenta foi capaz, através do intermediador, de evitar a criação de contrato e causar impacto negativo ao código de busca.
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+        ybar stacked,
+        ymax=1,
+        ymin=0,
+        enlargelimits=0.15,
+        legend style={at={(0.5,-0.20)},
+          anchor=north,legend columns=-1},
+        ylabel={Índice de acerto},
+        symbolic x coords={C1, C2, C3, C4,
+            C5, C6, C7},
+        xtick=data,
+        x tick label style={rotate=45,anchor=east},
+        ]
+    \addplot+[ybar] plot coordinates {(C1,0.33) (C2,0.66)
+      (C3,1) (C4,0.33)};
+    \addplot+[ybar] plot coordinates {(C1,0) (C2,0)
+      (C3,0) (C4,0)};
+    \addplot+[ybar] plot coordinates {(C1,0.66) (C2,0.33)
+      (C3,0) (C4,0.66)};
+    \legend{Acertou, Errou, Não Respondeu}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Índice de acerto sem o uso da ferramenta}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+        ybar stacked,
+        ymax=1,
+        ymin=0,
+        enlargelimits=0.15,
+        legend style={at={(0.5,-0.20)},
+          anchor=north,legend columns=-1},
+        ylabel={Índice de acerto},
+        symbolic x coords={C1, C2, C3, C4,
+            C5, C6, C7},
+        xtick=data,
+        x tick label style={rotate=45,anchor=east},
+        ]
+    \addplot+[ybar] plot coordinates {(C1,1) (C2,1)
+      (C3,1) (C4,0.66)};
+    \addplot+[ybar] plot coordinates {(C1,0) (C2,0)
+      (C3,0) (C4,0)};
+    \addplot+[ybar] plot coordinates {(C1,0) (C2,0)
+      (C3,0) (C4,0.33)};
+    \legend{Acertou, Errou, Não Respondeu}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Índice de acerto com o uso da ferramenta}
+  \end{figure}
+
+  Ao analisar a mudança C3 isoladamente, onde ambos conseguem responder com 100\% de acerto, percebe-se nas figuras 29 e 30 que o cliente 2 consegue realizar uma consulta com melhor desempenho (menor número de requisições e tamanho de dados) que o cliente 1. Isso porque, após a mudança e sem alterar o código de busca de dados, a ferramenta consegue remapear as requisições geradas pelas consultas GraphQL graças ao algoritmo que automatiza as chamadas à API.
+
+  Outro ponto importante é que, após a mudança C3 e a atualização dos metadados no cliente, o algoritmo da ferramenta percebe que há a possibilidade de realizar menos requisições em busca dos dados para responder as perguntas. Isso resulta em uma redução de aproximadamente 54\% dos acessos entre o cliente 1 e cliente 2.
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        ymax=400,
+        ymin=100,
+        enlargelimits=0.15,
+        ylabel={Número de requisições},
+        symbolic x coords={Cliente 1,Cliente 2},
+        xtick=data,
+        nodes near coords,
+        nodes near coords align={vertical},
+        ]
+    \addplot coordinates {(Cliente 1,360) (Cliente 2,194)};
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Comparação no número de requisições C3}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        ymax=230,
+        ymin=200,
+        enlargelimits=0.15,
+        ylabel={Tamanho de resposta (kb)},
+        symbolic x coords={Cliente 1,Cliente 2},
+        xtick=data,
+        nodes near coords,
+        nodes near coords align={vertical},
+        ]
+    \addplot coordinates {(Cliente 1,225.777) (Cliente 2,221.547)};
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Comparação no tamanho de resposta C3}
+  \end{figure}
+
+  Apesar dos ganhos de performance e desenvolvimento através do uso da ferramenta vistos anteriormente, percebe-se na figura 31 um outro cenário que indica o lado negativo do seu uso causado pelo tempo de \textit{overhead}\footnote{
+    Processamento em excesso
+  }. Em média, a ferramenta atrasou em 1.7 segundos a execução na consulta de dados do cliente, sendo o tempo de busca de metadados responsável por somar mais da metade deste atraso inicial.
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+          ybar interval,
+          ylabel={Tempo de overhead (s)},
+          legend style={at={(0.5,-0.15)},
+          anchor=north,legend columns=-1},
+          const plot,
+          stack plots=y,
+          area style,
+          symbolic x coords={C1,C2,C3,C4},
+          enlarge x limits=false]
+      \addplot coordinates
+          {(C1,0.57) (C2,0.42) (C3,0.38) (C4,0.48)}
+          \closedcycle;
+      \addplot coordinates
+          {(C1,1.178) (C2,1.123) (C3,1.343) (C4,1.185)}
+          \closedcycle;
+      \legend{Processamento,Busca de Metadados}
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Overhead da ferramenta}
+  \end{figure}
+
+  \section{Conclusão}\label{sec:figs}
+
+  Tornam-se evidentes, através deste trabalho, as dificuldades de serviços em realizar mudanças na especificação de APIs uma vez que estas já possuem clientes fazendo o seu acesso. Além disso, nota-se que é possível explorar novos modelos de comunicação a fim de manter a eficiência da comunicação cliente-servidor evitando versionamento.
+
+  O esforço dedicado neste trabalho em explorar esta área culminou no desenvolvimento de um novo modelo de comunicação. Buscou-se eliminar a preocupação de clientes em estar continuamente atualizando seu código de busca a cada mudança na API e direcionar desenvolvedores de clientes à implementação de códigos de busca independentes de especificação de API.
+
+  Apesar das vantagens do modelo, existe um investimento a mais com a integração da ferramenta para que clientes e serviços possam usufruir os benefícios demonstrados nos resultados dos testes de validação. Felizmente, serviços que disponibilizam descrições de metadados da sua API apresentam uma menor barreira de entrada e já podem ser consultados utilizando a ferramenta.
+
+  Por fim, uma das principais contribuições deste trabalho é estampar os benefícios da automação na execução de consultas de dados e composição de serviços que o modelo e a ferramenta podem proporcionar. Basta que os desenvolvedores de clientes se preocupem em escrever um código de busca através de linguagens de consulta como o GraphQL e dos serviços em disponibilizarem uma completa descrição dos metadados de APIs.
+  
+  \bibliographystyle{sbc}
+  \bibliography{bibliografia/index}
+\end{document}
