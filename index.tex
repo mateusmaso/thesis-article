@@ -1,8 +1,8 @@
 \documentclass[12pt]{article}
 \usepackage{sbc-template}
 \usepackage{graphicx,url}
-\usepackage[brazil]{babel}   
-\usepackage[utf8]{inputenc}  
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
 \usepackage{indentfirst}
 \usepackage{graphics}
 \usepackage{graphicx}
@@ -22,25 +22,24 @@
 \author{Mateus Maso\inst{1}, Frank Siqueira\inst{2}}
 \address{Departamento de Informática e Estatística (INE)\\Universidade Federal de Santa Catarina (UFSC) -- Florianópolis, SC -- Brazil
 \email{mateus.maso@grad.ufsc.br, frank.siqueira@ufsc.br}}
-
-\begin{document} 
+\begin{document}
   \maketitle
   \begin{abstract}
     In order to maintain client-server communication efficiency without the need of versioning Web APIs, services have come across problems while performing changes on their interface access specification due to the coupling caused by clients on the implementation of its fetching code. Seeking to develop a solution for the problem, this project conducts a study on the usage of GraphQL language and API description formats to propose a client-server communication model through automation in the execution of data queries. As a result, a tool foresaw by the proposed model is developed to validate its applicability and guide client-side developers to the implementation of data fetching code independent of API specification.
   \end{abstract}
 
-  \begin{resumo} 
+  \begin{resumo}
     A fim de manter a eficiência da comunicação cliente-servidor sem a necessidade do versionamento de APIs Web, serviços têm encontrado dificuldades em realizar mudanças na especificação de sua interface de acesso devido ao acoplamento causado por clientes na implementação em seu código de busca. No intuito de desenvolver uma solução para o problema encontrado, este trabalho realiza um estudo sobre o uso da linguagem GraphQL e formatos de descrição de API para propor um modelo de comunicação cliente-servidor através da automação na execução de consultas de dados. Como resultado, é desenvolvida uma ferramenta prevista pelo modelo proposto para validar sua aplicabilidade e direcionar desenvolvedores de clientes à implementação de um código de busca independente de especificação de API.
   \end{resumo}
 
   \section{Introdução}
 
   Em 2005, ocorreu uma grande transição no modelo de comunicação entre aplicações distribuídas, onde estas passaram a utilizar amplamente o protocolo HTTP e o modelo cliente-servidor para a troca de informações na World Wide Web. Hoje, empresas como Facebook e Netflix mostram que construir APIs Web é, não apenas essencial para entrar rápido no mercado de plataformas emergentes, como também um novo meio de agregar valor em seu próprio modelo de negócio e oferecer uma melhor experiência a seus usuários. \cite{Duvander2013-2, Art2016}
-  
+
   Contudo, após anos de sua popularização, serviços têm mostrado dificuldades em realizar mudanças em suas APIs Web sem comprometer a comunicação de clientes. Isso porque clientes continuam implementando seu código de busca através de chamadas diretamente na API, ocasionando um acoplamento da especificação muitas vezes indesejado pelos serviços.
-  
+
   Com o objetivo de resolver o problema de acoplamento, este trabalho propõe um novo modelo de comunicação cliente-servidor através da automação na execução de consultas de dados sobre APIs Web. O modelo visa direcionar desenvolvedores de clientes à implementação de códigos de busca independente de especificação de API, resultando no desenvolvimento de clientes tolerantes às mudanças na especificação. Ainda, prevê o desenvolvimento de uma ferramenta que funciona como intermediadora na comunicação e automação de consultas, permitindo otimização de requisições e composição de serviços para consulta de dados.
-  
+
   \section{Desenvolvimento}
 
   \subsection{Planejamento de Projeto}
@@ -72,34 +71,34 @@
     \end{tikzpicture}
     \caption{Modelo de comunicação entre cliente e serviço}
   \end{figure}
-  
+
   O modelo de comunicação representado pode não revelar problemas para serviços com pouca demanda de acesso e diversidade de consultas. Contudo, ao longo do tempo e com o aumento na quantidade de contratos, alterações na especificação como, por exemplo, as de fluxo de dados\footnote{
-  Fluxo de acesso por clientes para consulta de dados sobre APIs de serviços.
-} podem se tornar um desafio.
+    Fluxo de acesso por clientes para consulta de dados sobre APIs de serviços.
+  } podem se tornar um desafio.
 
-Mudanças no fluxo de dados pela API são inevitáveis em aplicações distribuídas. Elas ocorrem para abraçar a constante transformação por clientes na execução de consultas de dados. Com isso, busca-se manter uma comunicação eficiente através da redução no número de chamadas executadas na API e do tamanho de dados transmitidos pela rede. Essas mudanças podem ser desde uma simples alteração no nome de um método ou número argumentos, até as mais complexas, como dados de retorno e estilo de arquitetura. A figura 17 ilustra o fluxo de dados entre um cliente e um serviço.
+  Mudanças no fluxo de dados pela API são inevitáveis em aplicações distribuídas. Elas ocorrem para abraçar a constante transformação por clientes na execução de consultas de dados. Com isso, busca-se manter uma comunicação eficiente através da redução no número de chamadas executadas na API e do tamanho de dados transmitidos pela rede. Essas mudanças podem ser desde uma simples alteração no nome de um método ou número argumentos, até as mais complexas, como dados de retorno e estilo de arquitetura. A figura 17 ilustra o fluxo de dados entre um cliente e um serviço.
 
-\begin{figure}[H]
-  \centering
-  \begin{tikzpicture}[font=\small]
-    \draw (-2,0) -- (-2,-5) (2,0) -- (2,-5);
-    \node at (-2,0.3) {Client};
-    \node at (2,0.3) {API (Service)};
-    \node[loosely dotted] (virtualData) at (-4,-1){\includegraphics[width=1.1cm]{figuras/code}};
-    \node[below of=virtualData,node distance=0.0cm] {\{$data$\}};
-    \node (data) at (-4,-4.5) {\includegraphics[width=1.1cm]{figuras/code}};
-    \node[below of=data,node distance=0.0cm] {\{$data$\}};
-    \node[cloud, cloud puffs=16,draw,minimum height=1.2cm] (cloudData) at (4,-2.5) {\includegraphics[width=1.1cm]{figuras/code}};
-    \node[below of=cloudData,node distance=0.0cm] {\{$data$\}};
-    \draw[->] (-2,-1) -- node[midway,above] {$request$} (2,-1.5);
-    \draw[<-] (-2,-2.5) -- node[midway,above] {$response$} (2,-2);
-    \draw[->] (-2,-3) -- node[midway,above] {$request$} (2,-3.5);
-    \draw[<-] (-2,-4.5) -- node[midway,above] {$response$} (2,-4);
-  \end{tikzpicture}
-  \caption{Fluxo de dados entre cliente e API}
-\end{figure}
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+      \draw (-2,0) -- (-2,-5) (2,0) -- (2,-5);
+      \node at (-2,0.3) {Client};
+      \node at (2,0.3) {API (Service)};
+      \node[loosely dotted] (virtualData) at (-4,-1){\includegraphics[width=1.1cm]{figuras/code}};
+      \node[below of=virtualData,node distance=0.0cm] {\{$data$\}};
+      \node (data) at (-4,-4.5) {\includegraphics[width=1.1cm]{figuras/code}};
+      \node[below of=data,node distance=0.0cm] {\{$data$\}};
+      \node[cloud, cloud puffs=16,draw,minimum height=1.2cm] (cloudData) at (4,-2.5) {\includegraphics[width=1.1cm]{figuras/code}};
+      \node[below of=cloudData,node distance=0.0cm] {\{$data$\}};
+      \draw[->] (-2,-1) -- node[midway,above] {$request$} (2,-1.5);
+      \draw[<-] (-2,-2.5) -- node[midway,above] {$response$} (2,-2);
+      \draw[->] (-2,-3) -- node[midway,above] {$request$} (2,-3.5);
+      \draw[<-] (-2,-4.5) -- node[midway,above] {$response$} (2,-4);
+    \end{tikzpicture}
+    \caption{Fluxo de dados entre cliente e API}
+  \end{figure}
 
-O impacto causado em clientes por mudanças no fluxo de dados de uma API felizmente é previsível, pois afeta diretamente, em sua maioria, o código de busca. Por outro lado, mudanças como a alteração de campos nas estruturas de dados, como renomear um campo "nome" para "nome\_completo", são de um grau de complexidade maior, pois pode não ter impacto no código de busca e sim na lógica da aplicação, onde é bem mais difícil de depurar erros.
+  O impacto causado em clientes por mudanças no fluxo de dados de uma API felizmente é previsível, pois afeta diretamente, em sua maioria, o código de busca. Por outro lado, mudanças como a alteração de campos nas estruturas de dados, como renomear um campo "nome" para "nome\_completo", são de um grau de complexidade maior, pois pode não ter impacto no código de busca e sim na lógica da aplicação, onde é bem mais difícil de depurar erros.
 
   \subsection{Proposta de Modelo}
 
@@ -161,18 +160,18 @@ A proposta de eliminação de contrato visa também automatizar o acesso de clie
 
   Visando a aceitação da ferramenta prevista pelo modelo em ambientes de desenvolvimento de clientes, foi preciso pensar em uma especificação que apresentasse uma interface de baixa curva de aprendizagem, um fluxo de execução replicável e agnóstico à plataforma, além do baixo impacto na base de código de clientes. Por conseguinte, a ferramenta proposta foi desenvolvida pensando na reutilização de tecnologias promissoras ou bem consolidadas no mercado de desenvolvimento.
 
-Com a sucessão de estudos, a escolha foi em utilizar a tecnologia GraphQL como principal biblioteca para ajudar com intermediação da comunicação do modelo proposto. Ao invés da tecnologia Falcor (apontada durante o estudo), GraphQL foi o único que apresentou uma solução robusta que permitisse o acesso de APIs Web por clientes através de consultas em seu código de busca. Da mesma forma, buscou-se trabalhar com formatos abertos de descrição de metadados de APIs, como por exemplo o JSON Hyper-Schema. Através de adaptadores, a ferramenta permite acelerar a integração de serviços que já oferecem metadados em formatos suportados.
+  Com a sucessão de estudos, a escolha foi em utilizar a tecnologia GraphQL como principal biblioteca para ajudar com intermediação da comunicação do modelo proposto. Ao invés da tecnologia Falcor (apontada durante o estudo), GraphQL foi o único que apresentou uma solução robusta que permitisse o acesso de APIs Web por clientes através de consultas em seu código de busca. Da mesma forma, buscou-se trabalhar com formatos abertos de descrição de metadados de APIs, como por exemplo o JSON Hyper-Schema. Através de adaptadores, a ferramenta permite acelerar a integração de serviços que já oferecem metadados em formatos suportados.
 
   \subsection{Implementação da Ferramenta}
 
   A fim de aplicar a especificação da ferramenta abordada no planejamento de projeto, foi proposta a implementação de onze funções, divididas em três categorias, para o uso de clientes na plataforma Web. Cada uma dessas funções levantadas resolve um problema com o intuito de chegar ao objetivo de representar os dois fluxos de execução. Dentro do conjunto de funções, quatro delas são responsáveis por criar o intermediador; três funções analisam as consultas através do formato AST; e as outras quatro transformam as consultas em requisições para API de serviços. Somente quatro são públicas e expostas para o cliente, sendo uma delas a principal para criação do esquema de consulta, e as outras três para serem sobrescritas por adaptadores.
 
   \section{Validação}\label{sec:figs}
-	
+
   Com o objetivo de validar o modelo proposto, é realizada uma pesquisa comparativa com foco no impacto da relação do uso da ferramenta implementada e mudanças no fluxo de dados sobre APIs Web. Para isso, é desenvolvido um ambiente de validação onde dois clientes, um com a ferramenta e o outro não, realizam três consultas de dados sobre uma API REST. Por fim, é aplicada uma série de quatro mudanças no fluxo de dados da API e coletados os dados para análise do impacto causado no código de busca desses clientes.
-  
+
   \subsection{Resultados}
-  
+
   Inicialmente, observa-se na figura 27 que o cliente 1 (sem o uso da ferramenta) não apresenta um bom índice de acerto das respostas. Dentre as quatro mudanças, obteve apenas 58\% de acerto, sendo a C3 a única mudança em que conseguiu responder corretamente todas as perguntas, pois não houve mudança nas URIs que estava utilizando. Um resultado esperado, significando que houve quebra de contrato e impacto negativo no código de busca.
 
   Em contrapartida, o cliente 2 (com o uso da ferramenta) apresenta um resultado no índice de acerto da figura 28 36.61\% superior ao cliente 1. Com um total de 91,5\% de acerto, apenas não completou com 100\% de acerto pois a mudança C4 não permitiu que fosse possível acessar todos os dados necessários para a responder da pergunta Q2. Isso representa que a ferramenta foi capaz, através do intermediador, de evitar a criação de contrato e causar impacto negativo ao código de busca.
@@ -315,7 +314,7 @@ Com a sucessão de estudos, a escolha foi em utilizar a tecnologia GraphQL como 
   Apesar das vantagens do modelo, existe um investimento a mais com a integração da ferramenta para que clientes e serviços possam usufruir os benefícios demonstrados nos resultados dos testes de validação. Felizmente, serviços que disponibilizam descrições de metadados da sua API apresentam uma menor barreira de entrada e já podem ser consultados utilizando a ferramenta.
 
   Por fim, uma das principais contribuições deste trabalho é estampar os benefícios da automação na execução de consultas de dados e composição de serviços que o modelo e a ferramenta podem proporcionar. Basta que os desenvolvedores de clientes se preocupem em escrever um código de busca através de linguagens de consulta como o GraphQL e dos serviços em disponibilizarem uma completa descrição dos metadados de APIs.
-  
+
   \bibliographystyle{sbc}
   \bibliography{bibliografia/index}
 \end{document}
